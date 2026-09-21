@@ -192,7 +192,18 @@ function wireRow(n){
   row.dataset.steptype = 'none';
   attachFundAutocomplete(row.querySelector('.f-name'));
 }
-
+  <!-- FOOTER WITH HIGH CONTRAST LIGHT FONTS -->
+  <footer style="display: block; width: 100%; clear: both; margin-top: 40px; padding-bottom: 40px; font-family: system-ui, -apple-system, sans-serif;">
+    <div style="background: rgba(15, 23, 42, 0.95); border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+      <p style="color: #FFFFFF; font-size: 0.88rem; line-height: 1.6; margin: 0; font-weight: 500; max-width: 850px; margin: 0 auto; letter-spacing: 0.3px;">
+        ⚠️ <strong>Statutory Disclaimer:</strong> Mutual fund investments are subject to market risks, read all scheme-related documents carefully. Projections are illustrative, based on selected parameters, and do not guarantee future returns.
+      </p>
+    </div>
+    <div style="text-align: center; font-size: 0.85rem; color: #F1F5F9; line-height: 1.5; font-weight: 400;">
+      Figures are illustrative — actual fund performance will vary. Stored only in this browser. Want SWP figures for a fund above? Head to the <a href="swp.html" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">SWP Planner</a>. · <a href="privacy-policy.html" style="color: #38bdf8; font-weight: 600; text-decoration: underline;">Privacy Policy</a>
+    </div>
+  </footer>
+  
 function renumberRows(){
   const rows = document.querySelectorAll('.fund-row');
   rows.forEach((row, i) => { row.querySelector('.row-num').textContent = 'Fund ' + (i+1); });
