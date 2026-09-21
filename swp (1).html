@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SWP Planner — Withdrawal &amp; Corpus Longevity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f5bd6">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+</head>
+<body>
+<div class="shell">
+
+  <nav class="tabbar">
+    <a href="index.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+      SIP Ledger
+    </a>
+    <a href="swp.html" class="tab active">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v14"/><path d="M6 11l6 6 6-6"/><path d="M4 21h16"/></svg>
+      SWP Planner
+    </a>
+    <a href="calculators.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="8" y2="11.01"/><line x1="12" y1="11" x2="12" y2="11.01"/><line x1="16" y1="11" x2="16" y2="11.01"/><line x1="8" y1="15" x2="8" y2="15.01"/><line x1="12" y1="15" x2="12" y2="15.01"/><line x1="16" y1="15" x2="16" y2="15.01"/></svg>
+      Calculators
+    </a>
+    <a href="sipswp.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3"/><path d="M4 7l3 3"/><path d="M20 17H7l3 3"/><path d="M20 17l-3-3"/></svg>
+      SIP + SWP
+    </a>
+  </nav>
+
+  <div class="masthead">
+    <div class="kicker">Withdrawal &amp; corpus longevity</div>
+    <h1>SWP Planner</h1>
+    <p class="sub">Pick a fund from your ledger or enter a fresh corpus, choose a withdrawal plan, and dynamically look up your live balances over time.</p>
+  </div>
+
+  <form id="swpForm">
+    <!-- 01 CHOOSE A CORPUS -->
+    <div class="card">
+      <div class="card-inner">
+        <h2 class="section-title"><span class="idx">01</span> Choose a corpus</h2>
+        <p class="section-desc">Pull from your ledger, or search AMFI's live database as you type. If a scheme is selected, its units will be pulled to compute live portfolio valuations dynamically.</p>
+        
+        <div class="form-grid">
+          <div class="field span2">
+            <label>Corpus / fund name</label>
+            <input type="text" id="swpFundName" placeholder="Start typing to search live funds…" autocomplete="off" required />
+          </div>
+          <div class="field money">
+            <label>Starting corpus (₹)</label>
+            <input type="number" id="swpCorpusAmount" min="0" step="1000" placeholder="1000000" required />
+          </div>
+          <div class="field">
+            <label>Total units <span style="opacity:.6;font-weight:400;">optional</span></label>
+            <input type="number" id="swpUnits" min="0" step="0.001" placeholder="e.g. 4502.12" />
+          </div>
+        </div>
+        <div id="liveBadgeContainer" style="margin-top: 15px;"></div>
+      </div>
+    </div>
+
+    <!-- 02 WITHDRAWAL PLAN -->
+    <div class="card">
+      <div class="card-inner">
+        <h2 class="section-title"><span class="idx">02</span> Withdrawal plan</h2>
+        <p class="section-desc">Withdraw a percentage of the corpus each year, or a fixed rupee amount every month.</p>
+        
+        <div class="form-grid">
+          <div class="field span2">
+            <label>Withdraw as</label>
+            <div class="toggle-group" id="withdrawalTypeGroup">
+              <button type="button" class="active" data-type="percent">% of corpus / year</button>
+              <button type="button" data-type="amount">Fixed ₹ / month</button>
+            </div>
+          </div>
+          <div class="field money">
+            <label id="withdrawalLabel">Withdrawal rate (% per year)</label>
+            <input type="number" id="withdrawalValue" min="0" step="0.1" value="6" required />
+          </div>
+          <div class="field span2" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+            <input type="checkbox" id="stepUpWithInflation" checked style="width: auto; margin: 0;" />
+            <label for="stepUpWithInflation" style="margin: 0; font-weight: 400; cursor: pointer;">Increase withdrawal with inflation each year (keep purchasing power steady)</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 GROWTH, INFLATION & HORIZON -->
+    <div class="card">
+      <div class="card-inner">
+        <h2 class="section-title"><span class="idx">03</span> Growth, inflation &amp; horizon</h2>
+        <p class="section-desc">Set your projection metrics for tracking duration.</p>
+        <div class="assumptions">
+          <div class="slider-field">
+            <label>Expected annual growth <span class="val" id="growthVal">10%</span></label>
+            <input type="range" id="growthRate" min="0" max="30" step="0.5" value="10">
+          </div>
+          <div class="slider-field">
+            <label>Inflation rate <span class="val" id="inflationVal">6%</span></label>
+            <input type="range" id="inflationRate" min="0" max="15" step="0.5" value="6">
+          </div>
+          <div class="slider-field">
+            <label>Withdraw for <span class="val" id="horizonVal">20 yrs</span></label>
+            <input type="range" id="horizonYears" min="1" max="40" step="1" value="20">
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- 04 RESULT -->
+  <h2 class="section-title" style="color:var(--text-on-ink); margin:36px 0 14px 4px;"><span class="idx" style="color:var(--accent-a);border-color:var(--accent-a);">04</span> Result</h2>
+  
+  <div class="card" id="resultCard">
+    <div class="card-inner">
+      <div class="summary-grid">
+        <div class="summary-cell"><div class="label">Starting corpus</div><div class="value" id="resCorpus">₹0</div></div>
+        <div class="summary-cell"><div class="label">Total withdrawn</div><div class="value" id="resWithdrawn">₹0</div></div>
+        <div class="summary-cell"><div class="label">Ending balance (nominal)</div><div class="value pos" id="resFuture">₹0</div></div>
+        <div class="summary-cell"><div class="label">Ending balance (real)</div><div class="value iris" id="resFutureReal">₹0</div></div>
+      </div>
+      <div id="chartRow" style="margin-top: 30px; text-align: center;"></div>
+    </div>
+  </div>
+
+  <!-- TABLE LOGS -->
+  <div class="card" id="tableCard" style="margin-top: 30px;">
+    <div class="card-inner">
+      <h2 class="section-title">Year by year projection</h2>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; text-align: left;" id="swpTable">
+          <thead>
+            <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); color: var(--text-dim);">
+              <th style="padding: 10px;">Year</th>
+              <th style="padding: 10px;">Opening balance</th>
+              <th style="padding: 10px;">Withdrawn</th>
+              <th style="padding: 10px;">Closing (nominal)</th>
+              <th style="padding: 10px;">Closing (real)</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer></footer>
+</div>
+
+<script src="common.js"></script>
+<script src="footer.js"></script>
+<script>
+let activeSchemeCode = "";
+let selectedWithdrawalType = "percent";
+
+document.addEventListener("DOMContentLoaded", function() {
+  const fundInput = document.getElementById("swpFundName");
+  const corpusInput = document.getElementById("swpCorpusAmount");
+  const unitsInput = document.getElementById("swpUnits");
+  const wValueInput = document.getElementById("withdrawalValue");
+  
+  // Attach AMFI Autocomplete helper from common.js
+  attachFundAutocomplete(fundInput, {
+    onSelect: function(item) {
+      activeSchemeCode = item.schemeCode || "";
+      fundInput.dataset.schemeCode = activeSchemeCode;
+      triggerLiveLookup();
+    }
+  });
+
+  // Handle inputs changing
+  [corpusInput, unitsInput, wValueInput].forEach(el => el.addEventListener("input", calculateSWPPlan));
+  
+  // Wire up sliders
+  ["growthRate", "inflationRate", "horizonYears"].forEach(id => {
+    const input = document.getElementById(id);
+    wireRangeFill(input);
+    input.addEventListener("input", function() {
+      let suffix = id === "horizonYears" ? " yrs" : "%";
+      document.getElementById(id.replace("Rate", "Val").replace("Years", "Val")).textContent = input.value + suffix;
+      calculateSWPPlan();
+    });
+  });
+
+  // Toggle buttons logic
+  document.querySelectorAll("#withdrawalTypeGroup button").forEach(btn => {
+    btn.addEventListener("click", function() {
+      document.querySelectorAll("#withdrawalTypeGroup button").forEach(b => b.classList.remove("active"));
+      this.classList.add("active");
+      selectedWithdrawalType = this.dataset.type;
+      
+      const label = document.getElementById("withdrawalLabel");
+      if (selectedWithdrawalType === "percent") {
+        label.textContent = "Withdrawal rate (% per year)";
+        wValueInput.value = "6";
+        wValueInput.placeholder = "6";
+      } else {
+        label.textContent = "Monthly withdrawal (₹)";
+        wValueInput.value = "25000";
+        wValueInput.placeholder = "25000";
+      }
+      calculateSWPPlan();
+    });
+  });
+
+  // Listen for reset/free-text typing clearing custom scheme codes
+  fundInput.addEventListener("input", function() {
+    if(!this.value.trim()) {
+      activeSchemeCode = "";
+      delete this.dataset.schemeCode;
+      document.getElementById("liveBadgeContainer").innerHTML = "";
+    }
+  });
+
+  calculateSWPPlan();
+});
+
+async function triggerLiveLookup() {
+  const badgeContainer = document.getElementById("liveBadgeContainer");
+  const corpusInput = document.getElementById("swpCorpusAmount");
+  const unitsInput = document.getElementById("swpUnits");
+  
+  if (!activeSchemeCode) return;
+  
+  badgeContainer.innerHTML = `<span class="nav-badge muted" style="background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;">Checking live AMFI database…</span>`;
+  
+  // Emulate structural container matching ledger expectations
+  const mockEntry = { 
+    schemeCode: activeSchemeCode, 
+    units: parseFloat(unitsInput.value) || 0,
+    presentValue: parseFloat(corpusInput.value) || 0
+  };
+  
+  const updates = await updatePortfolioLiveNAV(mockEntry);
+  if(updates) {
+    badgeContainer.innerHTML = `<span class="nav-badge state-ok" style="background: rgba(16,185,129,0.15); color: #10b981; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-block;">📈 Live NAV: ₹${updates.nav} (As of ${updates.date})</span>`;
+    
+    // Auto fill valuation dynamically if matching portfolio units exist
+    if(mockEntry.units > 0 && updates.currentValuation) {
+      corpusInput.value = updates.currentValuation;
+    }
+  } else {
+    badgeContainer.innerHTML = `<span class="nav-badge state-warn" style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; display: inline-block;">⚠️ Running offline. Using manual balances.</span>`;
+  }
+  calculateSWPPlan();
+}
+
+function calculateSWPPlan() {
+  const corpus = parseFloat(document.getElementById("swpCorpusAmount").value) || 0;
+  const wVal = parseFloat(document.getElementById("withdrawalValue").value) || 0;
+  const inflation = parseFloat(document.getElementById("inflationRate").value) / 100 || 0;
+  const growth = parseFloat(document.getElementById("growthRate").value) / 100 || 0;
+  const horizon = parseInt(document.getElementById("horizonYears").value) || 1;
+  const stepUpWithInflation = document.getElementById("stepUpWithInflation").checked;
+
+  const sim = simulateSWP(corpus, selectedWithdrawalType, wVal, growth, inflation, stepUpWithInflation, horizon);
+
+  // Update totals text interface
+  document.getElementById("resCorpus").textContent = fmtINR(corpus);
+  document.getElementById("resWithdrawn").textContent = fmtINR(sim.totalWithdrawn);
+  document.getElementById("resFuture").textContent = fmtINR(sim.endingNominal);
+  document.getElementById("resFutureReal").textContent = fmtINR(sim.endingReal);
+
+  // Print projection lines down to grid layout
+  const body = document.getElementById("tableBody");
+  body.innerHTML = "";
+  
+  const nominalPoints = [corpus];
+  const realPoints = [corpus];
+
+  sim.rows.forEach(r => {
+    nominalPoints.push(r.closing);
+    realPoints.push(r.closing / Math.pow(1 + inflation, r.year));
+    
+    const tr = document.createElement("tr");
+    tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+    tr.innerHTML = `
+      <td style="padding: 10px;">Year ${r.year}${r.depleted ? ' <span style="color:#ef4444;">[Depleted]</span>' : ''}</td>
+      <td style="padding: 10px;">${fmtINR(r.opening)}</td>
+      <td style="padding: 10px; color:#f59e0b;">${fmtINR(r.withdrawn)}</td>
+      <td style="padding: 10px; font-weight:600;">${fmtINR(r.closing)}</td>
+      <td style="padding: 10px; color:var(--iris);">${fmtINR(r.closing / Math.pow(1 + inflation, r.year))}</td>
+    `;
+    body.appendChild(tr);
+  });
+
+  // Draw chart wrapper
+  document.getElementById("chartRow").innerHTML = buildAreaLineChart(nominalPoints, realPoints, {
+    width: 500,
+    height: 160,
+    accentColor: "var(--accent-b)",
+    secondColor: "var(--iris)"
+  });
+}
+</script>
+</body>
+</html>
