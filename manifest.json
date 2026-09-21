@@ -1,0 +1,16 @@
+{
+  "name": "SIP & SWP Calculators",
+  "short_name": "SIP Calc",
+  "description": "SIP Ledger, SWP Planner, combined SIP+SWP, and quick calculators for Daily/Monthly/Step-Up SIP, Lumpsum, and Goal-Based SIP.",
+  "start_url": "index.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#2f5bd6",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SIP Ledger — Present &amp; Future Value Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f5bd6">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+</head>
+<body>
+<div class="shell">
+
+  <nav class="tabbar">
+    <a href="index.html" class="tab active">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+      SIP Ledger
+    </a>
+    <a href="swp.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v14"/><path d="M6 11l6 6 6-6"/><path d="M4 21h16"/></svg>
+      SWP Planner
+    </a>
+    <a href="calculators.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="8" y2="11.01"/><line x1="12" y1="11" x2="12" y2="11.01"/><line x1="16" y1="11" x2="16" y2="11.01"/><line x1="8" y1="15" x2="8" y2="15.01"/><line x1="12" y1="15" x2="12" y2="15.01"/><line x1="16" y1="15" x2="16" y2="15.01"/></svg>
+      Calculators
+    </a>
+    <a href="sipswp.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3"/><path d="M4 7l3 3"/><path d="M20 17H7l3 3"/><path d="M20 17l-3-3"/></svg>
+      SIP + SWP
+    </a>
+  </nav>
+
+  <div class="masthead">
+    <div class="kicker">Personal investment ledger</div>
+    <h1>SIP Ledger</h1>
+    <p class="sub">Log several funds at once with the date you began and what each is worth today, then project every one forward — in real, inflation-adjusted rupees.</p>
+  </div>
+
+  <!-- ADD ENTRIES -->
+  <div class="card">
+    <div class="card-inner">
+      <h2 class="section-title"><span class="idx">01</span> Add funds</h2>
+      <p class="section-desc">Add as many funds as you like below, then post them to the ledger together. Fund names are searched live from AMFI's public mutual fund database as you type — or just type any name if you'd rather.</p>
+      <form id="addForm">
+        <div id="rowsContainer"></div>
+        <div class="form-actions">
+          <button type="button" id="addRowBtn" class="btn-ghost btn-small">+ Add another fund</button>
+          <button type="submit" class="btn-primary">Add all to ledger <span class="arrow">→</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ASSUMPTIONS -->
+  <div class="card">
+    <div class="card-inner">
+      <h2 class="section-title"><span class="idx">02</span> Projection assumptions</h2>
+      <p class="section-desc">Applied to every entry's future value below. Each fund's own step-up still applies on top of this.</p>
+      <div class="assumptions">
+        <div class="slider-field">
+          <label>Expected annual growth <span class="val" id="growthVal">12%</span></label>
+          <input type="range" id="growthRate" min="0" max="30" step="0.5" value="12">
+        </div>
+        <div class="slider-field">
+          <label>Inflation rate <span class="val" id="inflationVal">6%</span></label>
+          <input type="range" id="inflationRate" min="0" max="15" step="0.5" value="6">
+        </div>
+        <div class="slider-field">
+          <label>Project forward <span class="val" id="horizonVal">10 yrs</span></label>
+          <input type="range" id="horizonYears" min="1" max="35" step="1" value="10">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEDGER -->
+  <h2 class="section-title" style="color:var(--text-on-ink); margin:36px 0 14px 4px;"><span class="idx" style="color:var(--accent-a);border-color:var(--accent-a);">03</span> Your funds</h2>
+  <div id="ledgerList"></div>
+  <div id="emptyState" class="empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    No entries yet — add your first fund(s) above.
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="card" id="summaryCard" style="display:none;">
+    <div class="card-inner">
+      <h2 class="section-title"><span class="idx">04</span> Portfolio total</h2>
+      <p class="section-desc">Across every fund logged above, at the assumptions set in step 02.</p>
+      <div class="summary-grid">
+        <div class="summary-cell"><div class="label">Invested so far</div><div class="value" id="sumInvested">₹0</div></div>
+        <div class="summary-cell"><div class="label">Value today</div><div class="value" id="sumCurrent">₹0</div></div>
+        <div class="summary-cell"><div class="label">Projected (nominal)</div><div class="value pos" id="sumFuture">₹0</div></div>
+        <div class="summary-cell"><div class="label">Projected (real, today's ₹)</div><div class="value iris" id="sumFutureReal">₹0</div></div>
+      </div>
+      <div class="donut-row" id="allocationRow"></div>
+    </div>
+  </div>
+
+  <footer>Figures are illustrative — actual fund performance will vary. Stored only in this browser. Want SWP figures for a fund above? Head to the <a href="swp.html">SWP Planner</a>. · <a href="privacy-policy.html">Privacy Policy</a></footer>
+</div>
+
+<script src="common.js"></script>
+<script>
+let entries = loadLedgerEntries();
+let openIds = new Set();
+let rowCount = 0;
+let navCheckResults = {}; // entryId -> 'loading' | 'error' | 'no-code' | result object
+
+/* ---------------- bulk add rows ---------------- */
+function rowTemplate(n){
+  return `
+    <div class="fund-row" data-row="${n}">
+      <div class="row-num">Fund ${n}</div>
+      <button type="button" class="row-remove" data-remove="${n}" title="Remove this row">✕</button>
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Fund / SIP name</label>
+          <input type="text" class="f-name" placeholder="Start typing to search live funds…" autocomplete="off" required />
+        </div>
+        <div class="field">
+          <label>Start date</label>
+          <input type="date" class="f-start" required />
+        </div>
+        <div class="field money">
+          <label>Monthly SIP (₹)</label>
+          <input type="number" class="f-monthly" min="0" step="100" placeholder="5000" required />
+        </div>
+        <div class="field money">
+          <label>Current value (₹)</label>
+          <input type="number" class="f-present" min="0" step="100" placeholder="72500" required />
+        </div>
+        <div class="field money">
+          <label>Total invested (₹) <span style="opacity:.6;font-weight:400;">optional</span></label>
+          <input type="number" class="f-invested" min="0" step="100" placeholder="auto" />
+        </div>
+        <div class="field span2">
+          <label>Future step-up</label>
+          <div class="toggle-group f-steptype-group">
+            <button type="button" class="active" data-steptype="none">None</button>
+            <button type="button" data-steptype="percent">% / year</button>
+            <button type="button" data-steptype="amount">₹ / year</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Step-up value</label>
+          <input type="number" class="f-stepval" min="0" step="1" placeholder="0" disabled />
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addRow(){
+  rowCount++;
+  const div = document.createElement('div');
+  div.innerHTML = rowTemplate(rowCount);
+  document.getElementById('rowsContainer').appendChild(div.firstElementChild);
+  wireRow(rowCount);
+}
+
+function wireRow(n){
+  const row = document.querySelector(`.fund-row[data-row="${n}"]`);
+  row.querySelector('.row-remove').addEventListener('click', () => {
+    row.remove();
+    renumberRows();
+  });
+  const group = row.querySelector('.f-steptype-group');
+  const stepInput = row.querySelector('.f-stepval');
+  group.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      row.dataset.steptype = btn.getAttribute('data-steptype');
+      stepInput.disabled = (btn.getAttribute('data-steptype') === 'none');
+      if (stepInput.disabled) stepInput.value = '';
+    });
+  });
+  row.dataset.steptype = 'none';
+  attachFundAutocomplete(row.querySelector('.f-name'));
+}
+
+function renumberRows(){
+  const rows = document.querySelectorAll('.fund-row');
+  rows.forEach((row, i) => { row.querySelector('.row-num').textContent = 'Fund ' + (i+1); });
+  if (rows.length === 0) addRow();
+}
+
+document.getElementById('addRowBtn').addEventListener('click', addRow);
+addRow(); // start with one row
+
+/* ---------------- ledger math + render ---------------- */
+function render(){
+  const list = document.getElementById('ledgerList');
+  const empty = document.getElementById('emptyState');
+  const summaryCard = document.getElementById('summaryCard');
+  list.innerHTML = '';
+
+  if (entries.length === 0){
+    empty.style.display = 'block';
+    summaryCard.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  summaryCard.style.display = 'block';
+
+  const growth = parseFloat(document.getElementById('growthRate').value) / 100;
+  const inflation = parseFloat(document.getElementById('inflationRate').value) / 100;
+  const horizonYears = parseFloat(document.getElementById('horizonYears').value);
+  const today = new Date();
+  const horizonMonths = Math.round(horizonYears * 12);
+
+  let totalInvested = 0, totalCurrent = 0, totalFuture = 0, totalFutureReal = 0;
+
+  entries.forEach(entry => {
+    const n = monthsBetween(entry.startDate, today);
+    const invested = (entry.investedOverride != null && entry.investedOverride !== '')
+      ? parseFloat(entry.investedOverride)
+      : entry.monthlyAmt * n;
+    const current = parseFloat(entry.presentValue);
+    const gain = current - invested;
+    const gainPct = invested > 0 ? (gain / invested) * 100 : 0;
+    const cagr = solveCAGR(entry.monthlyAmt, n, current);
+
+    const stepType = entry.stepUpType || 'none';
+    const stepVal = entry.stepUpValue || 0;
+    const sim = simulateSIPFuture(current, entry.monthlyAmt, stepType, stepVal, growth, horizonMonths);
+    const futureNominal = sim.nominal;
+    const futureReal = futureNominal / Math.pow(1+inflation, horizonYears);
+
+    const nominalSeries = [current].concat(sim.yearly);
+    const realSeries = nominalSeries.map((v, i) => v / Math.pow(1+inflation, i));
+    const chartSVG = buildAreaLineChart(nominalSeries, realSeries, { accentColor:'var(--accent-b)', secondColor:'var(--iris)' });
+
+    totalInvested += invested;
+    totalCurrent += current;
+    totalFuture += futureNominal;
+    totalFutureReal += futureReal;
+
+    const stepLabel = stepType === 'percent' ? `${stepVal}% / yr`
+                     : stepType === 'amount' ? `${fmtINR(stepVal)} / yr`
+                     : 'None';
+
+    const isOpen = openIds.has(entry.id);
+
+    let navCheckHTML = '';
+    if (isOpen){
+      if (!entry.schemeCode){
+        navCheckHTML = buildNavCheckHTML(entry.id, 'no-code', current);
+      } else {
+        const state = navCheckResults[entry.id];
+        if (state === undefined){
+          navCheckResults[entry.id] = 'loading';
+          navCheckHTML = buildNavCheckHTML(entry.id, 'loading', current);
+          computeLiveNAVCheck(entry.schemeCode, entry.startDate, entry.monthlyAmt, today).then(result => {
+            navCheckResults[entry.id] = result || 'error';
+            const box = document.getElementById(`navcheck-${entry.id}`);
+            if (box) box.outerHTML = buildNavCheckHTML(entry.id, navCheckResults[entry.id], current);
+          });
+        } else {
+          navCheckHTML = buildNavCheckHTML(entry.id, state, current);
+        }
+      }
+    }
+
+    const el = document.createElement('div');
+    el.className = 'entry' + (isOpen ? ' open' : '');
+    el.innerHTML = `
+      <div class="entry-head" data-id="${entry.id}">
+        <div class="entry-fund-row">
+          <div class="fund-avatar" style="background:${fundColor(entry.fundName)};">${fundInitial(entry.fundName)}</div>
+          <div class="entry-fund">
+            <div class="name">${escapeHtml(entry.fundName)}</div>
+            <div class="since">since ${formatDate(entry.startDate)} · ${n} mo</div>
+          </div>
+        </div>
+        <div class="entry-stats">
+          <div class="stat"><div class="label">Invested</div><div class="value num">${fmtINR(invested)}</div></div>
+          <div class="stat"><div class="label">Now worth</div><div class="value num">${fmtINR(current)}</div></div>
+          <div class="stat"><div class="label">Gain</div><div class="value num ${gain>=0?'pos':'neg'}">${gain>=0?'▲':'▼'} ${fmtPct(gainPct)}</div></div>
+          <div class="stat"><div class="label">Est. CAGR</div><div class="value num ${cagr!==null && cagr>=0?'pos':'neg'}">${cagr!==null ? fmtPct(cagr*100) : '—'}</div></div>
+        </div>
+        <div class="chev">▾</div>
+      </div>
+      <div class="entry-body">
+        <div class="entry-body-inner">
+          <table class="mini-table">
+            <tr><td>Monthly SIP</td><td>${fmtINR(entry.monthlyAmt)}</td></tr>
+            <tr><td>Start date</td><td>${formatDate(entry.startDate)}</td></tr>
+            <tr><td>Months invested</td><td>${n}</td></tr>
+            <tr><td>Total invested</td><td>${fmtINR(invested)}</td></tr>
+            <tr><td>Current value</td><td>${fmtINR(current)}</td></tr>
+            <tr><td>Absolute gain</td><td>${fmtINR(gain)}</td></tr>
+            <tr><td>Estimated CAGR</td><td>${cagr!==null ? fmtPct(cagr*100) : 'need more history'}</td></tr>
+            <tr><td>Step-up</td><td>${stepLabel}</td></tr>
+          </table>
+          <div class="projection-box">
+            <div class="ptitle">If SIP continues ${horizonYears} more year${horizonYears==1?'':'s'} at ${(growth*100).toFixed(1)}% growth</div>
+            <div class="proj-row big"><span class="k">Projected value (nominal)</span><span class="v">${fmtINR(futureNominal)}</span></div>
+            <div class="proj-row real"><span class="k">Real value at ${(inflation*100).toFixed(1)}% inflation</span><span class="v">${fmtINR(futureReal)}</span></div>
+            <div class="chart-box">
+              ${chartSVG}
+              <div class="chart-axis-row"><span>Now · ${fmtINR(current)}</span><span>Year ${horizonYears} · ${fmtINR(futureNominal)}</span></div>
+              <div class="chart-legend">
+                <span><span class="swatch" style="background:var(--accent-b);"></span>Nominal</span>
+                <span><span class="swatch dashed"></span>Real (today's ₹)</span>
+              </div>
+            </div>
+          </div>
+          ${navCheckHTML}
+        </div>
+        <div class="entry-foot">
+          <a href="swp.html?fund=${encodeURIComponent(entry.id)}" class="btn-ghost btn-small" style="text-decoration:none;display:inline-block;">Plan SWP from this fund →</a>
+          <button class="btn-danger" data-del="${entry.id}">Remove entry</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+
+  document.getElementById('sumInvested').textContent = fmtINR(totalInvested);
+  document.getElementById('sumCurrent').textContent = fmtINR(totalCurrent);
+  document.getElementById('sumFuture').textContent = fmtINR(totalFuture);
+  document.getElementById('sumFutureReal').textContent = fmtINR(totalFutureReal);
+
+  const allocationRow = document.getElementById('allocationRow');
+  if (entries.length > 1){
+    const segments = entries.map(e => ({ label: e.fundName, value: parseFloat(e.presentValue), color: fundColor(e.fundName) }));
+    const donutSVG = buildDonutChart(segments, { size:148, thickness:20 });
+    const legendHTML = segments.map(seg => {
+      const pct = totalCurrent > 0 ? (seg.value / totalCurrent) * 100 : 0;
+      return `<div class="donut-legend-item">
+        <span class="name"><span class="donut-swatch" style="background:${seg.color};"></span>${escapeHtml(seg.label)}</span>
+        <span class="donut-pct">${pct.toFixed(1)}%</span>
+      </div>`;
+    }).join('');
+    allocationRow.innerHTML = `${donutSVG}<div class="donut-legend">${legendHTML}</div>`;
+  } else {
+    allocationRow.innerHTML = '';
+  }
+
+  list.querySelectorAll('.entry-head').forEach(h => {
+    h.addEventListener('click', () => {
+      const id = h.getAttribute('data-id');
+      if (openIds.has(id)) openIds.delete(id); else openIds.add(id);
+      render();
+    });
+  });
+  list.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-del');
+      entries = entries.filter(en => en.id !== id);
+      saveLedgerEntries(entries);
+      render();
+    });
+  });
+  list.querySelectorAll('.entry-foot a').forEach(a => { a.addEventListener('click', (e) => e.stopPropagation()); });
+}
+
+/* ---------------- submit bulk form ---------------- */
+document.getElementById('addForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const rows = document.querySelectorAll('.fund-row');
+  let added = 0;
+  rows.forEach(row => {
+    const fundName = row.querySelector('.f-name').value.trim();
+    const startDate = row.querySelector('.f-start').value;
+    const monthlyAmt = parseFloat(row.querySelector('.f-monthly').value);
+    const presentValue = parseFloat(row.querySelector('.f-present').value);
+    const investedRaw = row.querySelector('.f-invested').value;
+    const investedOverride = investedRaw === '' ? null : parseFloat(investedRaw);
+    const stepUpType = row.dataset.steptype || 'none';
+    const stepValRaw = row.querySelector('.f-stepval').value;
+    const stepUpValue = stepValRaw === '' ? 0 : parseFloat(stepValRaw);
+    const schemeCode = row.querySelector('.f-name').dataset.schemeCode || null;
+
+    if (!fundName || !startDate || isNaN(monthlyAmt) || isNaN(presentValue)) return;
+
+    const entry = { id: uid(), fundName, startDate, monthlyAmt, presentValue, investedOverride, stepUpType, stepUpValue, schemeCode };
+    entries.push(entry);
+    openIds.add(entry.id);
+    added++;
+  });
+  if (added > 0){
+    saveLedgerEntries(entries);
+    document.getElementById('rowsContainer').innerHTML = '';
+    rowCount = 0;
+    addRow();
+    render();
+  }
+});
+
+['growthRate','inflationRate','horizonYears'].forEach(id => {
+  const el = document.getElementById(id);
+  wireRangeFill(el);
+  el.addEventListener('input', () => {
+    document.getElementById('growthVal').textContent = document.getElementById('growthRate').value + '%';
+    document.getElementById('inflationVal').textContent = document.getElementById('inflationRate').value + '%';
+    document.getElementById('horizonVal').textContent = document.getElementById('horizonYears').value + ' yrs';
+    render();
+  });
+});
+
+document.getElementById('growthVal').textContent = document.getElementById('growthRate').value + '%';
+document.getElementById('inflationVal').textContent = document.getElementById('inflationRate').value + '%';
+document.getElementById('horizonVal').textContent = document.getElementById('horizonYears').value + ' yrs';
+render();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

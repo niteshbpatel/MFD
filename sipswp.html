@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SIP + SWP — Accumulation to Withdrawal, One Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f5bd6">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+</head>
+<body>
+<div class="shell">
+
+  <nav class="tabbar">
+    <a href="index.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+      SIP Ledger
+    </a>
+    <a href="swp.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v14"/><path d="M6 11l6 6 6-6"/><path d="M4 21h16"/></svg>
+      SWP Planner
+    </a>
+    <a href="sipswp.html" class="tab active">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v5h5"/><path d="M20 20v-5h-5"/><path d="M4 9a9 9 0 0 1 15-6.7L20 4"/><path d="M20 15a9 9 0 0 1-15 6.7L4 20"/></svg>
+      SIP + SWP
+    </a>
+    <a href="calculators.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="8" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="16" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="8" y2="15"/><line x1="12" y1="15" x2="12" y2="15"/><line x1="16" y1="15" x2="16" y2="15"/></svg>
+      Calculators
+    </a>
+  </nav>
+
+  <div class="masthead">
+    <div class="kicker">Accumulation into withdrawal, one continuous plan</div>
+    <h1>SIP + SWP</h1>
+    <p class="sub">Already been investing for a while? Log your real SIP start date and amount below — and every time you stepped it up, with the date and the new amount — then pick when you'll switch to withdrawals and plan that phase too.</p>
+  </div>
+
+  <!-- SIP HISTORY LOG -->
+  <div class="card">
+    <div class="card-inner">
+      <h2 class="section-title">Your SIP history</h2>
+      <p class="section-desc">Start with when and how much you began investing. Add a row for every step-up — the exact date it happened and what the new monthly amount became.</p>
+      <div id="logRows"></div>
+      <div class="form-actions">
+        <button type="button" id="addLogRowBtn" class="btn-ghost btn-small">+ Add a step-up</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SWITCH DATE + ACCUMULATION GROWTH -->
+  <div class="card">
+    <div class="card-inner">
+      <h2 class="section-title">Switch to withdrawals</h2>
+      <p class="section-desc">The date your SIP stops and your SWP begins — often a retirement date, or simply today.</p>
+      <div class="form-grid">
+        <div class="field span2">
+          <label for="switchDate">Switch date</label>
+          <input type="date" id="switchDate">
+        </div>
+        <div class="field span2">
+          <label>Growth rate while accumulating <span class="val" id="accumRateVal" style="float:right;"></span></label>
+          <input type="range" id="accumRate" min="1" max="25" step="0.5" value="12">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WITHDRAWAL PLAN -->
+  <div class="card">
+    <div class="card-inner">
+      <h2 class="section-title">Withdrawal plan</h2>
+      <p class="section-desc">Withdraw a percentage of the corpus each year, or a fixed rupee amount every month, from the switch date onward.</p>
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Withdraw as</label>
+          <div class="toggle-group" id="withdrawTypeGroup">
+            <button type="button" class="active" data-wtype="percent">% of corpus / year</button>
+            <button type="button" data-wtype="amount">Fixed ₹ / month</button>
+          </div>
+        </div>
+        <div class="field span2" id="withdrawValueField">
+          <label id="withdrawValueLabel">Withdrawal rate (% per year)</label>
+          <input type="number" id="withdrawValue" min="0" step="0.5" value="6">
+        </div>
+        <div class="field span2" id="stepUpField" style="display:none; flex-direction:row; align-items:center; gap:8px; margin-top:6px;">
+          <input type="checkbox" id="stepUpInflation" style="width:auto;">
+          <label for="stepUpInflation" style="text-transform:none; font-size:13px; margin:0; font-weight:500;">Increase withdrawal with inflation each year</label>
+        </div>
+      </div>
+      <div class="assumptions" style="margin-top:18px;">
+        <div class="slider-field">
+          <label>Growth rate while withdrawing <span class="val" id="swpRateVal">8%</span></label>
+          <input type="range" id="swpRate" min="0" max="20" step="0.5" value="8">
+        </div>
+        <div class="slider-field">
+          <label>Inflation rate <span class="val" id="inflationVal">6%</span></label>
+          <input type="range" id="inflationRate" min="0" max="15" step="0.5" value="6">
+        </div>
+        <div class="slider-field">
+          <label>Withdraw for <span class="val" id="durationVal">25 yrs</span></label>
+          <input type="range" id="durationYears" min="1" max="40" step="1" value="25">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <h2 class="section-title" style="margin:30px 0 14px 2px;">Result</h2>
+  <div id="statusBanner" class="status-banner ok">Add your SIP details above to see the plan.</div>
+
+  <div class="card">
+    <div class="card-inner">
+      <div class="summary-grid">
+        <div class="summary-cell"><div class="label">Invested during SIP</div><div class="value" id="rInvested">₹0</div></div>
+        <div class="summary-cell"><div class="label">Corpus at switch date</div><div class="value pos" id="rCorpus">₹0</div></div>
+        <div class="summary-cell"><div class="label">Final monthly SIP</div><div class="value" id="rFinalSip">₹0</div></div>
+        <div class="summary-cell"><div class="label">Total withdrawn</div><div class="value" id="rWithdrawn">₹0</div></div>
+      </div>
+      <div class="summary-grid" style="margin-top:4px;">
+        <div class="summary-cell"><div class="label">Ending balance (nominal)</div><div class="value pos" id="rEndingNominal">₹0</div></div>
+        <div class="summary-cell"><div class="label">Ending balance (real, today's ₹)</div><div class="value iris" id="rEndingReal">₹0</div></div>
+      </div>
+      <div class="chart-box" id="chartBox"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-inner">
+      <h2 class="section-title" style="font-size:16px;">Withdrawal phase, year by year</h2>
+      <p class="section-desc">From the switch date onward — opening balance, what was withdrawn, and what's left.</p>
+      <div class="year-table-wrap">
+        <table class="year-table">
+          <thead><tr><th>Year</th><th>Opening</th><th>Withdrawn</th><th>Closing (nominal)</th><th>Closing (real)</th></tr></thead>
+          <tbody id="yearTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>Figures are illustrative — actual fund performance will vary. Nothing here is saved between visits; to track real funds over time, use the <a href="index.html">SIP Ledger</a>. · <a href="privacy-policy.html">Privacy Policy</a></footer>
+</div>
+
+<script src="common.js"></script>
+<script>
+let logRowCount = 0;
+
+function logRowTemplate(n, isStart){
+  return `
+    <div class="fund-row" data-row="${n}">
+      <div class="row-num">${isStart ? 'Start' : 'Step-up ' + n}</div>
+      ${isStart ? '' : `<button type="button" class="row-remove" data-remove="${n}" title="Remove this step-up">✕</button>`}
+      <div class="form-grid">
+        <div class="field span2">
+          <label>${isStart ? 'SIP start date' : 'Step-up date'}</label>
+          <input type="date" class="log-date" required>
+        </div>
+        <div class="field span2">
+          <label>${isStart ? 'Monthly amount (₹)' : 'New monthly amount (₹)'}</label>
+          <input type="number" class="log-amount" min="0" step="100" placeholder="${isStart ? '5000' : '7500'}" required>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addLogRow(isStart){
+  logRowCount++;
+  const div = document.createElement('div');
+  div.innerHTML = logRowTemplate(logRowCount, isStart);
+  const row = div.firstElementChild;
+  document.getElementById('logRows').appendChild(row);
+  if (!isStart){
+    row.querySelector('.row-remove').addEventListener('click', () => { row.remove(); renumberLogRows(); calculate(); });
+  }
+  row.querySelectorAll('input').forEach(el => el.addEventListener('input', calculate));
+  return row;
+}
+
+function renumberLogRows(){
+  document.querySelectorAll('#logRows .fund-row').forEach((row, i) => {
+    if (i > 0) row.querySelector('.row-num').textContent = 'Step-up ' + i;
+  });
+}
+
+document.getElementById('addLogRowBtn').addEventListener('click', () => { addLogRow(false); calculate(); });
+
+/* seed with a sensible starting example */
+const seedStart = addLogRow(true);
+seedStart.querySelector('.log-date').value = '2019-04-01';
+seedStart.querySelector('.log-amount').value = 5000;
+const seedStep = addLogRow(false);
+seedStep.querySelector('.log-date').value = '2022-04-01';
+seedStep.querySelector('.log-amount').value = 7500;
+
+/* switch date defaults to today */
+document.getElementById('switchDate').value = new Date().toISOString().slice(0, 10);
+
+/* ---------------- withdrawal type toggle ---------------- */
+let withdrawType = 'percent';
+document.querySelectorAll('#withdrawTypeGroup button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#withdrawTypeGroup button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    withdrawType = btn.getAttribute('data-wtype');
+    const label = document.getElementById('withdrawValueLabel');
+    const input = document.getElementById('withdrawValue');
+    const stepField = document.getElementById('stepUpField');
+    if (withdrawType === 'percent'){
+      label.textContent = 'Withdrawal rate (% per year)'; input.value = 6; input.step = 0.5;
+      stepField.style.display = 'none';
+    } else {
+      label.textContent = 'Monthly withdrawal (₹)'; input.value = 15000; input.step = 500;
+      stepField.style.display = 'flex';
+    }
+    calculate();
+  });
+});
+
+/* ---------------- calculation ---------------- */
+function calculate(){
+  const schedule = [];
+  document.querySelectorAll('#logRows .fund-row').forEach(row => {
+    const date = row.querySelector('.log-date').value;
+    const amount = parseFloat(row.querySelector('.log-amount').value);
+    if (date && !isNaN(amount) && amount >= 0) schedule.push({ date, amount });
+  });
+
+  const banner = document.getElementById('statusBanner');
+  if (schedule.length === 0 || !document.getElementById('switchDate').value){
+    banner.className = 'status-banner ok';
+    banner.textContent = 'Add your SIP details above to see the plan.';
+    ['rInvested','rCorpus','rFinalSip','rWithdrawn','rEndingNominal','rEndingReal'].forEach(id => document.getElementById(id).textContent = '₹0');
+    document.getElementById('chartBox').innerHTML = '';
+    document.getElementById('yearTableBody').innerHTML = '';
+    return;
+  }
+
+  const switchDate = new Date(document.getElementById('switchDate').value);
+  const accumRate = parseFloat(document.getElementById('accumRate').value) / 100;
+  const swpRate = parseFloat(document.getElementById('swpRate').value) / 100;
+  const inflation = parseFloat(document.getElementById('inflationRate').value) / 100;
+  const durationYears = parseFloat(document.getElementById('durationYears').value);
+  const withdrawValue = parseFloat(document.getElementById('withdrawValue').value) || 0;
+  const stepUp = document.getElementById('stepUpInflation').checked;
+
+  const accum = simulateHistoricalSIP(schedule, accumRate, switchDate);
+  const corpus = accum.nominal;
+  const accumYears = accum.yearly.length;
+
+  const swp = simulateSWP(corpus, withdrawType, withdrawValue, swpRate, inflation, stepUp, durationYears);
+
+  document.getElementById('rInvested').textContent = fmtINR(accum.totalInvested);
+  document.getElementById('rCorpus').textContent = fmtINR(corpus);
+  document.getElementById('rFinalSip').textContent = fmtINR(accum.finalMonthlyAmount);
+  document.getElementById('rWithdrawn').textContent = fmtINR(swp.totalWithdrawn);
+  document.getElementById('rEndingNominal').textContent = fmtINR(swp.endingNominal);
+  document.getElementById('rEndingReal').textContent = fmtINR(swp.endingReal);
+
+  if (swp.depletedAtMonth !== null){
+    const y = Math.floor((swp.depletedAtMonth - 1) / 12) + 1;
+    const m = ((swp.depletedAtMonth - 1) % 12) + 1;
+    banner.className = 'status-banner warn';
+    banner.textContent = `Corpus runs out around year ${y}, month ${m} of withdrawals — before your ${durationYears}-year horizon ends.`;
+  } else {
+    banner.className = 'status-banner ok';
+    banner.textContent = `Corpus lasts the full ${durationYears} years of withdrawals, with ${fmtINR(swp.endingNominal)} left over.`;
+  }
+
+  /* combined chart: accumulation phase then withdrawal phase, one continuous line */
+  const combinedNominal = [0].concat(accum.yearly, swp.rows.map(r => r.closing));
+  const combinedReal = combinedNominal.map((v, i) => v / Math.pow(1 + inflation, i));
+  const chartSVG = buildAreaLineChart(combinedNominal, combinedReal, { accentColor:'var(--primary)', secondColor:'var(--iris)' });
+  document.getElementById('chartBox').innerHTML = `
+    ${chartSVG}
+    <div class="chart-axis-row"><span>SIP starts</span><span>Switch: ${fmtINR(corpus)}</span><span>Year ${accumYears + durationYears}</span></div>
+    <div class="chart-legend">
+      <span><span class="swatch" style="background:var(--primary);"></span>Nominal balance</span>
+      <span><span class="swatch dashed"></span>Real (today's ₹)</span>
+    </div>
+  `;
+
+  const tbody = document.getElementById('yearTableBody');
+  tbody.innerHTML = swp.rows.map(row => {
+    const realClosing = row.closing / Math.pow(1 + inflation, accumYears + row.year);
+    return `<tr class="${row.depleted ? 'depleted' : ''}">
+      <td>Year ${row.year}</td>
+      <td>${fmtINR(row.opening)}</td>
+      <td>${fmtINR(row.withdrawn)}</td>
+      <td>${fmtINR(row.closing)}</td>
+      <td>${fmtINR(realClosing)}</td>
+    </tr>`;
+  }).join('');
+}
+
+document.getElementById('switchDate').addEventListener('input', calculate);
+document.getElementById('stepUpInflation').addEventListener('change', calculate);
+['accumRate','swpRate','inflationRate','durationYears'].forEach(id => {
+  const el = document.getElementById(id);
+  wireRangeFill(el);
+  el.addEventListener('input', () => {
+    document.getElementById('accumRateVal').textContent = document.getElementById('accumRate').value + '%';
+    document.getElementById('swpRateVal').textContent = document.getElementById('swpRate').value + '%';
+    document.getElementById('inflationVal').textContent = document.getElementById('inflationRate').value + '%';
+    document.getElementById('durationVal').textContent = document.getElementById('durationYears').value + ' yrs';
+    calculate();
+  });
+});
+document.getElementById('withdrawValue').addEventListener('input', calculate);
+
+/* init */
+document.getElementById('accumRateVal').textContent = document.getElementById('accumRate').value + '%';
+document.getElementById('swpRateVal').textContent = document.getElementById('swpRate').value + '%';
+document.getElementById('inflationVal').textContent = document.getElementById('inflationRate').value + '%';
+document.getElementById('durationVal').textContent = document.getElementById('durationYears').value + ' yrs';
+calculate();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculators — Monthly, Daily, Step-Up SIP, Lumpsum &amp; Goal SIP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f5bd6">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+</head>
+<body>
+<div class="shell">
+
+  <nav class="tabbar">
+    <a href="index.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+      SIP Ledger
+    </a>
+    <a href="swp.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v14"/><path d="M6 11l6 6 6-6"/><path d="M4 21h16"/></svg>
+      SWP Planner
+    </a>
+    <a href="sipswp.html" class="tab">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v5h5"/><path d="M20 20v-5h-5"/><path d="M4 9a9 9 0 0 1 15-6.7L20 4"/><path d="M20 15a9 9 0 0 1-15 6.7L4 20"/></svg>
+      SIP + SWP
+    </a>
+    <a href="calculators.html" class="tab active">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="8" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="16" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="8" y2="15"/><line x1="12" y1="15" x2="12" y2="15"/><line x1="16" y1="15" x2="16" y2="15"/></svg>
+      Calculators
+    </a>
+  </nav>
+
+  <div class="masthead">
+    <div class="kicker">Quick, no-save calculators</div>
+    <h1>Calculators</h1>
+    <p class="sub">Monthly SIP, Daily SIP, Step-Up SIP, Lumpsum, and Goal-Based SIP — pick one, type a few numbers, see the result instantly. Nothing here is saved; for tracking real funds over time, use the SIP Ledger.</p>
+  </div>
+
+  <div class="calc-tab-row" id="calcTabRow">
+    <button class="calc-tab active" data-panel="monthly">Monthly SIP</button>
+    <button class="calc-tab" data-panel="daily">Daily SIP</button>
+    <button class="calc-tab" data-panel="stepup">Step Up SIP</button>
+    <button class="calc-tab" data-panel="lumpsum">Lumpsum</button>
+    <button class="calc-tab" data-panel="goal">Goal Based SIP</button>
+  </div>
+
+  <!-- MONTHLY SIP -->
+  <div class="calc-panel active" id="panel-monthly">
+    <div class="card">
+      <div class="card-inner">
+        <h2 class="section-title">Monthly SIP</h2>
+        <p class="section-desc">A fixed amount invested every month, compounding monthly.</p>
+        <div class="form-grid">
+          <div class="field span2">
+            <label>Monthly SIP amount (₹)</label>
+            <input type="number" id="m-amt" min="0" step="100" value="5000">
+          </div>
+          <div class="field span2">
+            <label>Time period</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="m-years" min="1" max="40" step="1" value="10">
+              <span class="val num" id="m-years-val" style="min-width:52px;">10 yrs</span>
+            </div>
+          </div>
+          <div class="field span2">
+            <label>Expected annual return</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="m-rate" min="1" max="30" step="0.5" value="12">
+              <span class="val num" id="m-rate-val" style="min-width:52px;">12%</span>
+            </div>
+          </div>
+        </div>
+        <div class="projection-box" style="margin-top:18px;">
+          <div class="summary-grid">
+            <div class="summary-cell"><div class="label">Invested amount</div><div class="value" id="m-invested">₹0</div></div>
+            <div class="summary-cell"><div class="label">Wealth gain</div><div class="value pos" id="m-gain">₹0</div></div>
+            <div class="summary-cell"><div class="label">Future value</div><div class="value pos" id="m-future">₹0</div></div>
+          </div>
+          <div class="chart-box" id="m-chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAILY SIP -->
+  <div class="calc-panel" id="panel-daily">
+    <div class="card">
+      <div class="card-inner">
+        <h2 class="section-title">Daily SIP</h2>
+        <p class="section-desc">A fixed amount invested every day instead of every month — the same maths, shorter compounding periods.</p>
+        <div class="form-grid">
+          <div class="field span2">
+            <label>Daily SIP amount (₹)</label>
+            <input type="number" id="d-amt" min="0" step="10" value="300">
+          </div>
+          <div class="field span2">
+            <label>Time period</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="d-years" min="1" max="40" step="1" value="10">
+              <span class="val num" id="d-years-val" style="min-width:52px;">10 yrs</span>
+            </div>
+          </div>
+          <div class="field span2">
+            <label>Expected annual return</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="d-rate" min="1" max="30" step="0.5" value="12">
+              <span class="val num" id="d-rate-val" style="min-width:52px;">12%</span>
+            </div>
+          </div>
+        </div>
+        <div class="projection-box" style="margin-top:18px;">
+          <div class="summary-grid">
+            <div class="summary-cell"><div class="label">Invested amount</div><div class="value" id="d-invested">₹0</div></div>
+            <div class="summary-cell"><div class="label">Wealth gain</div><div class="value pos" id="d-gain">₹0</div></div>
+            <div class="summary-cell"><div class="label">Future value</div><div class="value pos" id="d-future">₹0</div></div>
+          </div>
+          <div class="chart-box" id="d-chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP UP SIP -->
+  <div class="calc-panel" id="panel-stepup">
+    <div class="card">
+      <div class="card-inner">
+        <h2 class="section-title">Step Up SIP</h2>
+        <p class="section-desc">Start at one monthly amount and automatically raise it by a fixed percentage every year — how most people's SIPs actually grow with their income.</p>
+        <div class="form-grid">
+          <div class="field span2">
+            <label>Starting monthly SIP (₹)</label>
+            <input type="number" id="s-amt" min="0" step="100" value="5000">
+          </div>
+          <div class="field span2">
+            <label>Annual step-up</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="s-step" min="0" max="30" step="1" value="10">
+              <span class="val num" id="s-step-val" style="min-width:52px;">10%</span>
+            </div>
+          </div>
+          <div class="field span2">
+            <label>Time period</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="s-years" min="1" max="40" step="1" value="10">
+              <span class="val num" id="s-years-val" style="min-width:52px;">10 yrs</span>
+            </div>
+          </div>
+          <div class="field span2">
+            <label>Expected annual return</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="s-rate" min="1" max="30" step="0.5" value="12">
+              <span class="val num" id="s-rate-val" style="min-width:52px;">12%</span>
+            </div>
+          </div>
+        </div>
+        <div class="projection-box" style="margin-top:18px;">
+          <div class="summary-grid">
+            <div class="summary-cell"><div class="label">Invested amount</div><div class="value" id="s-invested">₹0</div></div>
+            <div class="summary-cell"><div class="label">Wealth gain</div><div class="value pos" id="s-gain">₹0</div></div>
+            <div class="summary-cell"><div class="label">Future value</div><div class="value pos" id="s-future">₹0</div></div>
+            <div class="summary-cell"><div class="label">Final month's SIP</div><div class="value" id="s-finalsip">₹0</div></div>
+          </div>
+          <div class="chart-box" id="s-chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LUMPSUM -->
+  <div class="calc-panel" id="panel-lumpsum">
+    <div class="card">
+      <div class="card-inner">
+        <h2 class="section-title">Lumpsum</h2>
+        <p class="section-desc">A single one-time investment left to compound, with nothing added afterward.</p>
+        <div class="form-grid">
+          <div class="field span2">
+            <label>Lumpsum amount (₹)</label>
+            <input type="number" id="l-amt" min="0" step="1000" value="200000">
+          </div>
+          <div class="field span2">
+            <label>Time period</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="l-years" min="1" max="40" step="1" value="10">
+              <span class="val num" id="l-years-val" style="min-width:52px;">10 yrs</span>
+            </div>
+          </div>
+          <div class="field span2">
+            <label>Expected annual return</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="l-rate" min="1" max="30" step="0.5" value="12">
+              <span class="val num" id="l-rate-val" style="min-width:52px;">12%</span>
+            </div>
+          </div>
+        </div>
+        <div class="projection-box" style="margin-top:18px;">
+          <div class="summary-grid">
+            <div class="summary-cell"><div class="label">Invested amount</div><div class="value" id="l-invested">₹0</div></div>
+            <div class="summary-cell"><div class="label">Wealth gain</div><div class="value pos" id="l-gain">₹0</div></div>
+            <div class="summary-cell"><div class="label">Future value</div><div class="value pos" id="l-future">₹0</div></div>
+          </div>
+          <div class="chart-box" id="l-chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOAL BASED SIP -->
+  <div class="calc-panel" id="panel-goal">
+    <div class="card">
+      <div class="card-inner">
+        <h2 class="section-title">Goal Based SIP</h2>
+        <p class="section-desc">Work backward from a target amount — tells you the monthly SIP needed to get there.</p>
+        <div class="form-grid">
+          <div class="field span2">
+            <label>Goal amount (₹)</label>
+            <input type="number" id="g-amt" min="0" step="10000" value="2500000">
+          </div>
+          <div class="field span2">
+            <label>Time period</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="g-years" min="1" max="40" step="1" value="10">
+              <span class="val num" id="g-years-val" style="min-width:52px;">10 yrs</span>
+            </div>
+          </div>
+          <div class="field span2">
+            <label>Expected annual return</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" id="g-rate" min="1" max="30" step="0.5" value="12">
+              <span class="val num" id="g-rate-val" style="min-width:52px;">12%</span>
+            </div>
+          </div>
+        </div>
+        <div class="projection-box" style="margin-top:18px;">
+          <div class="summary-grid">
+            <div class="summary-cell"><div class="label">Required monthly SIP</div><div class="value pos" id="g-required">₹0</div></div>
+            <div class="summary-cell"><div class="label">Total invested</div><div class="value" id="g-invested">₹0</div></div>
+            <div class="summary-cell"><div class="label">Wealth gain</div><div class="value pos" id="g-gain">₹0</div></div>
+          </div>
+          <div class="chart-box" id="g-chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Figures are illustrative — actual fund performance will vary. Track real funds on the <a href="index.html">SIP Ledger</a>, or plan a combined accumulation-then-withdrawal life cycle on <a href="sipswp.html">SIP + SWP</a>. · <a href="privacy-policy.html">Privacy Policy</a></footer>
+</div>
+
+<script src="common.js"></script>
+<script>
+/* ---------------- tab switching ---------------- */
+document.querySelectorAll('.calc-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.calc-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+function chartBlock(hostId, yearlySeries, years){
+  const svg = buildAreaLineChart(yearlySeries, null, { accentColor:'var(--primary)' });
+  document.getElementById(hostId).innerHTML = `
+    ${svg}
+    <div class="chart-axis-row"><span>Now</span><span>Year ${years}</span></div>
+  `;
+}
+
+/* ---------------- Monthly SIP ---------------- */
+function calcMonthly(){
+  const amt = parseFloat(document.getElementById('m-amt').value) || 0;
+  const years = parseFloat(document.getElementById('m-years').value);
+  const rate = parseFloat(document.getElementById('m-rate').value) / 100;
+  const months = years * 12;
+  const future = sipFV(amt, rate/12, months);
+  const invested = amt * months;
+  document.getElementById('m-invested').textContent = fmtINR(invested);
+  document.getElementById('m-gain').textContent = fmtINR(future - invested);
+  document.getElementById('m-future').textContent = fmtINR(future);
+  const series = [0];
+  for (let y = 1; y <= years; y++) series.push(sipFV(amt, rate/12, y*12));
+  chartBlock('m-chart', series, years);
+}
+['m-amt','m-years','m-rate'].forEach(id => document.getElementById(id).addEventListener('input', calcMonthly));
+wireRangeFill(document.getElementById('m-years'));
+wireRangeFill(document.getElementById('m-rate'));
+document.getElementById('m-years').addEventListener('input', e => document.getElementById('m-years-val').textContent = e.target.value + ' yrs');
+document.getElementById('m-rate').addEventListener('input', e => document.getElementById('m-rate-val').textContent = e.target.value + '%');
+
+/* ---------------- Daily SIP ---------------- */
+function calcDaily(){
+  const amt = parseFloat(document.getElementById('d-amt').value) || 0;
+  const years = parseFloat(document.getElementById('d-years').value);
+  const rate = parseFloat(document.getElementById('d-rate').value) / 100;
+  const future = dailySIPFV(amt, rate, years);
+  const invested = amt * Math.round(years * 365);
+  document.getElementById('d-invested').textContent = fmtINR(invested);
+  document.getElementById('d-gain').textContent = fmtINR(future - invested);
+  document.getElementById('d-future').textContent = fmtINR(future);
+  const series = [0];
+  for (let y = 1; y <= years; y++) series.push(dailySIPFV(amt, rate, y));
+  chartBlock('d-chart', series, years);
+}
+['d-amt','d-years','d-rate'].forEach(id => document.getElementById(id).addEventListener('input', calcDaily));
+wireRangeFill(document.getElementById('d-years'));
+wireRangeFill(document.getElementById('d-rate'));
+document.getElementById('d-years').addEventListener('input', e => document.getElementById('d-years-val').textContent = e.target.value + ' yrs');
+document.getElementById('d-rate').addEventListener('input', e => document.getElementById('d-rate-val').textContent = e.target.value + '%');
+
+/* ---------------- Step Up SIP ---------------- */
+function calcStepup(){
+  const amt = parseFloat(document.getElementById('s-amt').value) || 0;
+  const step = parseFloat(document.getElementById('s-step').value);
+  const years = parseFloat(document.getElementById('s-years').value);
+  const rate = parseFloat(document.getElementById('s-rate').value) / 100;
+  const sim = simulateSIPFuture(0, amt, 'percent', step, rate, years*12);
+  document.getElementById('s-invested').textContent = fmtINR(sim.totalInvested);
+  document.getElementById('s-gain').textContent = fmtINR(sim.nominal - sim.totalInvested);
+  document.getElementById('s-future').textContent = fmtINR(sim.nominal);
+  let finalSip = amt;
+  for (let y = 1; y < years; y++) finalSip = finalSip * (1 + step/100);
+  document.getElementById('s-finalsip').textContent = fmtINR(finalSip);
+  chartBlock('s-chart', [0].concat(sim.yearly), years);
+}
+['s-amt','s-step','s-years','s-rate'].forEach(id => document.getElementById(id).addEventListener('input', calcStepup));
+wireRangeFill(document.getElementById('s-step'));
+wireRangeFill(document.getElementById('s-years'));
+wireRangeFill(document.getElementById('s-rate'));
+document.getElementById('s-step').addEventListener('input', e => document.getElementById('s-step-val').textContent = e.target.value + '%');
+document.getElementById('s-years').addEventListener('input', e => document.getElementById('s-years-val').textContent = e.target.value + ' yrs');
+document.getElementById('s-rate').addEventListener('input', e => document.getElementById('s-rate-val').textContent = e.target.value + '%');
+
+/* ---------------- Lumpsum ---------------- */
+function calcLumpsum(){
+  const amt = parseFloat(document.getElementById('l-amt').value) || 0;
+  const years = parseFloat(document.getElementById('l-years').value);
+  const rate = parseFloat(document.getElementById('l-rate').value) / 100;
+  const future = lumpsumFV(amt, rate, years);
+  document.getElementById('l-invested').textContent = fmtINR(amt);
+  document.getElementById('l-gain').textContent = fmtINR(future - amt);
+  document.getElementById('l-future').textContent = fmtINR(future);
+  const series = [amt];
+  for (let y = 1; y <= years; y++) series.push(lumpsumFV(amt, rate, y));
+  chartBlock('l-chart', series, years);
+}
+['l-amt','l-years','l-rate'].forEach(id => document.getElementById(id).addEventListener('input', calcLumpsum));
+wireRangeFill(document.getElementById('l-years'));
+wireRangeFill(document.getElementById('l-rate'));
+document.getElementById('l-years').addEventListener('input', e => document.getElementById('l-years-val').textContent = e.target.value + ' yrs');
+document.getElementById('l-rate').addEventListener('input', e => document.getElementById('l-rate-val').textContent = e.target.value + '%');
+
+/* ---------------- Goal Based SIP ---------------- */
+function calcGoal(){
+  const goal = parseFloat(document.getElementById('g-amt').value) || 0;
+  const years = parseFloat(document.getElementById('g-years').value);
+  const rate = parseFloat(document.getElementById('g-rate').value) / 100;
+  const months = years * 12;
+  const required = solveRequiredSIP(goal, rate, months) || 0;
+  const invested = required * months;
+  document.getElementById('g-required').textContent = fmtINR(required);
+  document.getElementById('g-invested').textContent = fmtINR(invested);
+  document.getElementById('g-gain').textContent = fmtINR(goal - invested);
+  const series = [0];
+  for (let y = 1; y <= years; y++) series.push(sipFV(required, rate/12, y*12));
+  chartBlock('g-chart', series, years);
+}
+['g-amt','g-years','g-rate'].forEach(id => document.getElementById(id).addEventListener('input', calcGoal));
+wireRangeFill(document.getElementById('g-years'));
+wireRangeFill(document.getElementById('g-rate'));
+document.getElementById('g-years').addEventListener('input', e => document.getElementById('g-years-val').textContent = e.target.value + ' yrs');
+document.getElementById('g-rate').addEventListener('input', e => document.getElementById('g-rate-val').textContent = e.target.value + '%');
+
+/* init all */
+calcMonthly(); calcDaily(); calcStepup(); calcLumpsum(); calcGoal();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
