@@ -1,5 +1,5 @@
 /* ================================================================
-   SIP Ledger / SWP Planner — shared helpers
+   SIP Ledger / SWP Planner — Shared Helpers & Auto-NAV Engine
    ================================================================ */
 
 /* ---------------- formatting ---------------- */
@@ -40,12 +40,10 @@ function fundColor(name){
 }
 function fundInitial(name){
   const trimmed = (name || '?').trim();
-  return trimmed ? trimmed[0].toUpperCase() : '?';
+  return trimmed ? trimmed.toUpperCase() : '?';
 }
 
 /* ---------------- range slider fill ---------------- */
-/* Keeps a <input type="range"> track visually filled up to the thumb by
-   writing the current percentage into --fill, which the CSS gradient reads. */
 function wireRangeFill(input){
   const update = () => {
     const min = parseFloat(input.min) || 0;
@@ -106,15 +104,11 @@ function simulateSIPFuture(currentValue, monthlyAmt, stepUpType, stepUpValue, an
   return { nominal: balance, yearly, totalInvested };
 }
 
-/* Daily SIP: same maths as a monthly SIP, just with daily periods. */
 function dailySIPFV(dailyAmt, annualRate, years){
   const days = Math.round(years * 365);
   return sipFV(dailyAmt, annualRate/365, days);
 }
 
-/* Goal-based SIP: given a target future value, solve the required monthly
-   contribution. sipFV is linear in the contribution amount, so this is a
-   direct inverse — no bisection needed. */
 function solveRequiredSIP(targetFV, annualRate, months){
   const monthlyRate = annualRate / 12;
   const perRupeeFV = sipFV(1, monthlyRate, months);
@@ -122,16 +116,11 @@ function solveRequiredSIP(targetFV, annualRate, months){
   return targetFV / perRupeeFV;
 }
 
-/* Reconstructs an ACTUAL dated SIP history — a log of {date, amount}
-   step-ups (not a flat annual %) — and simulates the balance month by
-   month from the first entry's date through endDate. Future-dated entries
-   in the schedule are simply not reached yet if endDate falls before them,
-   so the same log can mix real past step-ups with planned future ones. */
 function simulateHistoricalSIP(schedule, annualGrowthRate, endDate){
   const sorted = schedule.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   if (sorted.length === 0) return { nominal: 0, yearly: [], totalInvested: 0, months: 0, finalMonthlyAmount: 0 };
 
-  const start = new Date(sorted[0].date);
+  const start = new Date(sorted.date);
   const monthlyGrowth = annualGrowthRate / 12;
   let balance = 0;
   let totalInvested = 0;
@@ -139,7 +128,7 @@ function simulateHistoricalSIP(schedule, annualGrowthRate, endDate){
   let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
   const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
   let monthIndex = 0;
-  let activeAmount = sorted[0].amount;
+  let activeAmount = sorted.amount;
   let stepIdx = 0;
 
   while (cursor <= endMonth){
@@ -155,7 +144,6 @@ function simulateHistoricalSIP(schedule, annualGrowthRate, endDate){
   }
   return { nominal: balance, yearly, totalInvested, months: monthIndex, finalMonthlyAmount: activeAmount };
 }
-
 
 /* ---------------- SWP math ---------------- */
 function simulateSWP(corpus, withdrawalType, withdrawalValue, annualGrowthRate, annualInflation, stepUpWithInflation, durationYears){
@@ -219,8 +207,6 @@ function searchMFList(list, query, limit){
   return starts.concat(contains).slice(0, limit);
 }
 
-/* Wires a text input up to live-search AMFI fund names as the person types.
-   Falls back silently to free text if the list can't be fetched. */
 function attachFundAutocomplete(inputEl, opts){
   opts = opts || {};
   const host = inputEl.parentElement;
@@ -295,11 +281,35 @@ function attachFundAutocomplete(inputEl, opts){
   }
 }
 
-/* ---------------- live NAV sanity check ---------------- */
-/* For a fund picked from the live search (so we have its AMFI scheme code),
-   pull its full NAV history once, replay the monthly SIP against the real
-   NAV on (or just before) each purchase date, and compare the result to
-   what the person typed in as their current value. */
+/* ---------------- live NAV auto-update and valuation engine ---------------- */
+async function updatePortfolioLiveNAV(entry) {
+  if (!entry || !entry.schemeCode) return null;
+  try {
+    const response = await fetch(`https://api.mfapi.in/mf/${entry.schemeCode}/latest`);
+    if (!response.ok) throw new Error('Network fallback triggered');
+    const jsonResult = await response.json();
+    if (jsonResult && jsonResult.data && jsonResult.data) {
+      const liveNavValue = parseFloat(jsonResult.data.nav);
+      const liveDateString = jsonResult.data.date;
+      
+      // Calculate real present value dynamically if historical units exist
+      let calculatedPresentValue = entry.presentValue; 
+      if (entry.units && liveNavValue) {
+        calculatedPresentValue = Math.round(entry.units * liveNavValue);
+      }
+      return {
+        nav: liveNavValue,
+        date: liveDateString,
+        currentValuation: calculatedPresentValue
+      };
+    }
+  } catch (err) {
+    console.warn("Live NAV fallback active for schemeCode:", entry.schemeCode, err);
+    return null;
+  }
+  return null;
+}
+
 const _mfHistoryCache = {};
 function fetchSchemeHistory(code){
   if (!code) return Promise.resolve(null);
@@ -311,7 +321,7 @@ function fetchSchemeHistory(code){
   }
   return _mfHistoryCache[code];
 }
-function parseMFDate(str){ // "dd-mm-yyyy"
+function parseMFDate(str){ 
   const [d, m, y] = str.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
@@ -328,7 +338,7 @@ function navOnOrBefore(history, targetDate){
     if (history[mid].date <= targetDate){ ans = history[mid]; lo = mid + 1; }
     else hi = mid - 1;
   }
-  return ans || history[0] || null;
+  return ans || history || null;
 }
 function computeLiveNAVCheck(schemeCode, startDateStr, monthlyAmt, today){
   return fetchSchemeHistory(schemeCode).then(raw => {
@@ -357,8 +367,7 @@ function computeLiveNAVCheck(schemeCode, startDateStr, monthlyAmt, today){
     };
   });
 }
-/* Builds the "live NAV check" box markup for one entry. `state` is one of:
-   'no-code' | 'loading' | 'error' | null | a result object from computeLiveNAVCheck. */
+
 function buildNavCheckHTML(entryId, state, presentValue){
   const id = `navcheck-${entryId}`;
   if (state === 'no-code'){
@@ -391,21 +400,18 @@ function buildNavCheckHTML(entryId, state, presentValue){
 }
 
 /* ---------------- inline SVG charts ---------------- */
-/* A small area+line chart: nominal path solid & filled, an optional second
-   (e.g. inflation-adjusted "real") path drawn dashed on top. Points are
-   plain numbers, evenly spaced along x — year 0 first. */
 function buildAreaLineChart(nominalPoints, realPoints, opts){
   opts = opts || {};
   const w = opts.width || 320, h = opts.height || 120;
   const accent = opts.accentColor || 'var(--accent-b)';
   const second = opts.secondColor || 'var(--iris)';
   const all = nominalPoints.concat(realPoints || []);
-  const maxVal = Math.max.apply(null, all.concat([1])) * 1.08;
+  const maxVal = Math.max.apply(null, all.concat()) * 1.08;
   const n = nominalPoints.length;
   const stepX = n > 1 ? w / (n - 1) : w;
   const toXY = (arr) => arr.map((v, i) => [i * stepX, h - (v / maxVal) * h]);
-  const lineFrom = (xy) => 'M' + xy.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L');
-  const areaFrom = (xy) => `M0,${h} L` + xy.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L') + ` L${w},${h} Z`;
+  const lineFrom = (xy) => 'M' + xy.map(p => p.toFixed(1) + ',' + p.toFixed(1)).join(' L');
+  const areaFrom = (xy) => `M0,${h} L` + xy.map(p => p.toFixed(1) + ',' + p.toFixed(1)).join(' L') + ` L${w},${h} Z`;
 
   const nomXY = toXY(nominalPoints);
   let svg = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`;
@@ -419,8 +425,6 @@ function buildAreaLineChart(nominalPoints, realPoints, opts){
   return svg;
 }
 
-/* A donut chart from {label, value, color} segments, drawn with stacked
-   stroke-dasharray circles (no external chart library needed). */
 function buildDonutChart(segments, opts){
   opts = opts || {};
   const size = opts.size || 150, thickness = opts.thickness || 20;
@@ -442,8 +446,7 @@ function buildDonutChart(segments, opts){
   return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${circles}</svg>`;
 }
 
-/* ---------------- generic calculators (Daily/Monthly SIP, Lumpsum, Goal SIP) ---------------- */
-/* Lumpsum future value: a single one-time investment compounding annually. */
+/* ---------------- generic calculators ---------------- */
 function lumpsumFV(principal, annualRate, years){
   return principal * Math.pow(1 + annualRate, years);
 }
@@ -454,13 +457,6 @@ function periodicSIPFV(amt, annualRate, periodsPerYear, years){
 }
 
 /* ---------------- SIP with a logged, dated step-up history ---------------- */
-/* Builds a month-by-month contribution schedule that can span a real,
-   logged history of step-ups (past, exact dates the person actually
-   stepped up their SIP) and a projected future (using an assumed annual
-   %/₹ step-up once past the log, up to a chosen end date — e.g. when an
-   SWP should begin). Each logged step-up keeps its own date and amount so
-   an irregular real history can be replayed exactly, not just approximated
-   as a flat annual increase. */
 function buildMonthlyContribSchedule(startDate, originalAmt, stepUpLog, todayDate, endDate, futureStepUpType, futureStepUpValue){
   const sortedLog = (stepUpLog || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   const schedule = [];
@@ -490,7 +486,6 @@ function buildMonthlyContribSchedule(startDate, originalAmt, stepUpLog, todayDat
   }
   return schedule;
 }
-/* Effective monthly contribution as of a given date, per the step-up log. */
 function effectiveMonthlyAmount(originalAmt, stepUpLog, atDate){
   let amt = originalAmt;
   (stepUpLog || []).slice().sort((a,b)=> new Date(a.date)-new Date(b.date)).forEach(ev => {
@@ -498,15 +493,11 @@ function effectiveMonthlyAmount(originalAmt, stepUpLog, atDate){
   });
   return amt;
 }
-/* Grows a plain array of monthly contribution amounts at a fixed monthly rate. */
 function fvWithSchedule(amounts, monthlyRate){
   let balance = 0;
   for (const amt of amounts) balance = (balance + amt) * (1 + monthlyRate);
   return balance;
 }
-/* Same idea as solveCAGR, but for a contribution schedule that varied over
-   time (i.e. a fund with a logged step-up history) rather than a flat
-   monthly amount. */
 function solveCAGRWithSchedule(amounts, targetValue){
   if (!amounts.length) return null;
   let lo = -0.95, hi = 4.0;
